@@ -8,38 +8,58 @@ import org.assertj.core.api.SoftAssertions;
 
 public class BoardLifecycle extends AbstractTest {
 
-    private static String boardUrl = BOARDS_ENDPOINT + getBoardId();
+    BoardEntity boardEntity = new BoardEntity();
 
-    public static String getBoardId() {
-        BoardEntity boardEntity = new BoardEntity();
-        return boardEntity.getId();
-    }
-
-    @Test(groups = "post", priority = 1)
+    @Test(priority = 1)
     public void createBoard() {
 
-        given()
-                .spec(requestSpec)
+        boardEntity = given()
+                .spec(requestSpecPost)
                 .when()
                 .post(BOARDS_ENDPOINT)
                 .then()
-                .statusCode(200);
+                .statusCode(200)
+                .extract().body().as(BoardEntity.class);
 
     }
 
-    @Test(groups = "get", priority = 2)
+    @Test(priority = 2)
     public void getBoard() {
 
-        BoardEntity response = given()
-            .spec(requestSpec)
+        boardEntity = given()
+            .spec(requestSpecGet)
             .when()
-            .get(boardUrl)
+            .basePath("/{id}")
+            .pathParam("id", boardEntity.getId())
+            .get()
             .then()
+            .statusCode(200)
             .extract().body().as(BoardEntity.class);
 
         SoftAssertions softly = new SoftAssertions();
-        softly.assertThat(response.getName()).as("Incorrect name")
-                .isEqualTo("testBoard");
+        softly.assertThat(boardEntity.getName()).as("Incorrect name")
+                .isEqualTo("testTrelloBoard");
+        softly.assertAll();
+
+    }
+
+
+    @Test(priority = 4)
+    public void deleteBoard() {
+
+        boardEntity = given()
+            .spec(requestSpecGet)
+            .when()
+            .basePath("/{id}")
+            .pathParam("id", boardEntity.getId())
+            .delete()
+            .then()
+            .statusCode(200)
+            .extract().body().as(BoardEntity.class);
+
+        SoftAssertions softly = new SoftAssertions();
+        softly.assertThat(boardEntity.getName())
+                .as("Board name after deletion is not null!").isEqualTo(null);
         softly.assertAll();
 
     }

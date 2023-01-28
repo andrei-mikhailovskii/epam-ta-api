@@ -5,35 +5,29 @@ import io.restassured.builder.RequestSpecBuilder;
 import io.restassured.http.ContentType;
 import io.restassured.specification.RequestSpecification;
 import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeSuite;
-import org.testng.annotations.BeforeTest;
 
 public class AbstractTest {
+    public static final String BOARDS_ENDPOINT = "https://api.trello.com/1/boards";
+    public static final String BOARD_NAME = "testTrelloBoard";
+    public static final String UPDATED_BOARD_NAME = "testTrelloBoardUpdated";
 
-    public static final String BOARDS_ENDPOINT = "https://api.trello.com/1/boards/";
+    protected RequestSpecification requestSpecPost;
+    protected RequestSpecification requestSpecGet;
 
-    protected RequestSpecification requestSpec;
-
-    @BeforeTest(groups = "post")
+    @BeforeClass()
     public void postBoardSetup() {
-        String name = System.getenv("boardName");
-        String key = System.getenv("key");
-        String token = System.getenv("token");
-        requestSpec = new RequestSpecBuilder()
-                .addQueryParam("name", name)
-                .addQueryParam("key", key)
-                .addQueryParam("token", token)
+        RestAssured.baseURI = BOARDS_ENDPOINT;
+
+        requestSpecPost = new RequestSpecBuilder()
+                .addQueryParam("name", BOARD_NAME)
+                .addQueryParam("key", PropertiesExtractor.getKey())
+                .addQueryParam("token", PropertiesExtractor.getToken())
                 .setContentType(ContentType.JSON)
                 .build();
-    }
 
-    @BeforeTest(groups = "get")
-    public void getBoardSetup() {
-        String key = System.getenv("key");
-        String token = System.getenv("token");
-        requestSpec = new RequestSpecBuilder()
-                .addQueryParam("key", key)
-                .addQueryParam("token", token)
+        requestSpecGet = new RequestSpecBuilder()
+                .addQueryParam("key", PropertiesExtractor.getKey())
+                .addQueryParam("token", PropertiesExtractor.getToken())
                 .build();
     }
 
