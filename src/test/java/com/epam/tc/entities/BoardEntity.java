@@ -13,6 +13,6 @@ public class BoardEntity {
 
     String id;
     String name;
-    String shortUrl;
+    String pinned;
 
 }
