@@ -80,4 +80,16 @@
         </plugins>
     </build>
 
+    <profiles>
+        <profile>
+            <id>ApiTrelloTests</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <properties>
+                <suite.xml.file>apiTest.xml</suite.xml.file>
+            </properties>
+        </profile>
+    </profiles>
+
 </project>

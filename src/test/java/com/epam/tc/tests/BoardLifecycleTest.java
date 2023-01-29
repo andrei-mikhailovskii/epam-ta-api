@@ -1,22 +1,21 @@
-package com.epam.tc;
+package com.epam.tc.tests;
 
 import static io.restassured.RestAssured.given;
+
 import com.epam.tc.entities.BoardEntity;
 import io.restassured.response.Response;
-import org.testng.Assert;
-import org.testng.annotations.Test;
-import org.assertj.core.api.SoftAssertions;
-
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import org.assertj.core.api.SoftAssertions;
+import org.testng.Assert;
+import org.testng.annotations.Test;
 
-
-public class BoardLifecycle extends AbstractTest {
+public class BoardLifecycleTest extends AbstractTest {
 
     private static final String BASE_PATH = "/{id}";
     BoardEntity boardEntity = new BoardEntity();
 
-    @Test(priority = 1)
+    @Test(priority = 1, groups = "board")
     public void createBoard() {
 
         Response response = given()
@@ -37,7 +36,7 @@ public class BoardLifecycle extends AbstractTest {
 
     }
 
-    @Test(priority = 2)
+    @Test(priority = 2, groups = "board")
     public void getBoard() {
 
         boardEntity = given()
@@ -58,7 +57,7 @@ public class BoardLifecycle extends AbstractTest {
 
     }
 
-    @Test(priority = 3)
+    @Test(priority = 3, groups = "board")
     public void updateBoard() {
 
         Response response = given()
@@ -84,7 +83,7 @@ public class BoardLifecycle extends AbstractTest {
 
     }
 
-    @Test(priority = 4)
+    @Test(priority = 4, groups = "board")
     public void deleteBoard() {
 
         boardEntity = given()
@@ -97,7 +96,7 @@ public class BoardLifecycle extends AbstractTest {
             .statusCode(STATUS_OK)
             .extract().body().as(BoardEntity.class);
 
-        Assert.assertEquals(boardEntity.getName(), null);
+        Assert.assertNull(boardEntity.getName());
 
     }
 
