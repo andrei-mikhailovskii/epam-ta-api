@@ -3,6 +3,8 @@ package com.epam.tc.tests;
 import static io.restassured.RestAssured.given;
 
 import com.epam.tc.PropertiesExtractor;
+import com.epam.tc.entities.BoardEntity;
+import com.epam.tc.entities.ListEntity;
 import io.restassured.RestAssured;
 import io.restassured.builder.RequestSpecBuilder;
 import io.restassured.http.ContentType;
@@ -21,7 +23,8 @@ public class AbstractTest {
 
     protected static final int STATUS_OK = 200;
     protected static final int STATUS_NOT_FOUND = 404;
-
+    BoardEntity boardEntity = new BoardEntity();
+    ListEntity listEntity = new ListEntity();
     protected RequestSpecification requestSpecPost;
     protected RequestSpecification requestSpecGet;
     protected RequestSpecification requestSpecPut;
@@ -81,6 +84,27 @@ public class AbstractTest {
                 .addQueryParam("token", PropertiesExtractor.getToken())
                 .setContentType(ContentType.JSON)
                 .build();
+    }
+
+    @BeforeClass(enabled = false)
+    protected BoardEntity createNewBoard() {
+        return given()
+                .spec(requestSpecPost)
+                .when()
+                .post(BOARDS_ENDPOINT)
+                .then()
+                .extract().body().as(BoardEntity.class);
+    }
+
+    @BeforeClass(enabled = false)
+    protected ListEntity createNewList(String boardId) {
+        return given()
+                .spec(requestSpecListPost)
+                .when()
+                .queryParam("idBoard", boardId)
+                .post(LISTS_ENDPOINT)
+                .then()
+                .extract().body().as(ListEntity.class);
     }
 
     @AfterClass(enabled = false)

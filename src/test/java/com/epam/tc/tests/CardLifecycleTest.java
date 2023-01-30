@@ -2,12 +2,11 @@ package com.epam.tc.tests;
 
 import static io.restassured.RestAssured.given;
 
-import com.epam.tc.entities.BoardEntity;
 import com.epam.tc.entities.CardAttachmentEntity;
 import com.epam.tc.entities.CardEntity;
-import com.epam.tc.entities.ListEntity;
 import org.assertj.core.api.SoftAssertions;
 import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 public class CardLifecycleTest extends AbstractTest {
@@ -18,28 +17,17 @@ public class CardLifecycleTest extends AbstractTest {
     private String expectedMimeType = "image/jpeg";
     private String expectedIsUploadValue = "true";
     private String expectedFileName = "oracle-java-e1450723340931.jpg";
-
-    BoardEntity boardEntity = new BoardEntity();
-    ListEntity listEntity = new ListEntity();
     CardEntity cardEntity = new CardEntity();
     CardAttachmentEntity attachmentEntity = new CardAttachmentEntity();
 
+    @BeforeClass
+    private void createBoardAndList() {
+        boardEntity = createNewBoard();
+        listEntity = createNewList(boardEntity.getId());
+    }
+
     @Test(priority = 1, groups = {"cards"})
     public void createCard() {
-        boardEntity = given()
-            .spec(requestSpecPost)
-            .when()
-            .post(BOARDS_ENDPOINT)
-            .then()
-            .extract().body().as(BoardEntity.class);
-
-        listEntity = given()
-            .spec(requestSpecListPost)
-            .when()
-            .queryParam("idBoard", boardEntity.getId())
-            .post(LISTS_ENDPOINT)
-            .then()
-            .extract().body().as(ListEntity.class);
 
         cardEntity = given()
                 .spec(requestSpecCardPost)
@@ -84,10 +72,9 @@ public class CardLifecycleTest extends AbstractTest {
                 .as("Invalid file name").isEqualTo(expectedFileName);
         softly.assertAll();
 
-
     }
 
-    @AfterClass(groups = {"cards"})
+    @AfterClass()
     private void deleteCreatedBoard() {
         deleteCreatedBoard(boardEntity.getId());
     }

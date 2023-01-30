@@ -2,32 +2,29 @@ package com.epam.tc.tests;
 
 import static io.restassured.RestAssured.given;
 
-import com.epam.tc.entities.BoardEntity;
 import com.epam.tc.entities.ListEntity;
 import org.assertj.core.api.SoftAssertions;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 public class ListLifecycleTest extends AbstractTest {
 
     private static final String ARCHIVE_LIST_PATH = "/{id}/closed";
-    BoardEntity boardEntity = new BoardEntity();
     ListEntity listEntity = new ListEntity();
+
+    @BeforeClass()
+    private void createBoard() {
+        boardEntity = createNewBoard();
+    }
 
     @Test(priority = 1, groups = "list")
     public void createList() {
-        boardEntity = given()
-            .spec(requestSpecPost)
-            .when()
-            .post(BOARDS_ENDPOINT)
-            .then()
-            .extract().body().as(BoardEntity.class);
 
         listEntity = given()
             .spec(requestSpecListPost)
             .when()
-            //.pathParam("name", LIST_NAME)
             .queryParam("idBoard", boardEntity.getId())
             .post(LISTS_ENDPOINT)
             .then()
