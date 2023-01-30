@@ -86,7 +86,7 @@ public class BoardLifecycleTest extends AbstractTest {
     @Test(priority = 4, groups = "board")
     public void deleteBoard() {
 
-        boardEntity = given()
+        given()
             .spec(requestSpecGet)
             .when()
             .basePath("/{id}")
@@ -96,7 +96,14 @@ public class BoardLifecycleTest extends AbstractTest {
             .statusCode(STATUS_OK)
             .extract().body().as(BoardEntity.class);
 
-        Assert.assertNull(boardEntity.getName());
+        given()
+            .spec(requestSpecGet)
+            .when()
+            .basePath(BASE_PATH)
+            .pathParam("id", boardEntity.getId())
+            .get()
+            .then()
+            .statusCode(STATUS_NOT_FOUND);
 
     }
 

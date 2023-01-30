@@ -1,27 +1,33 @@
 package com.epam.tc.tests;
 
+import static io.restassured.RestAssured.given;
+
 import com.epam.tc.PropertiesExtractor;
-import com.epam.tc.entities.BoardEntity;
 import io.restassured.RestAssured;
 import io.restassured.builder.RequestSpecBuilder;
 import io.restassured.http.ContentType;
 import io.restassured.specification.RequestSpecification;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 
 public class AbstractTest {
-    public static final String BOARDS_ENDPOINT = "https://api.trello.com/1/boards";
-    public static final String BOARD_NAME = "testTrelloBoard";
-    public static final String BOARD_NAME_UPDATED = "testTrelloBoardUpdated";
-    public static final String LISTS_ENDPOINT = "https://api.trello.com/1/lists";
-    public static final String LIST_NAME = "testList";
+    protected static final String BOARDS_ENDPOINT = "https://api.trello.com/1/boards";
+    protected static final String BOARD_NAME = "testTrelloBoard";
+    protected static final String BOARD_NAME_UPDATED = "testTrelloBoardUpdated";
+    protected static final String LISTS_ENDPOINT = "https://api.trello.com/1/lists";
+    protected static final String LIST_NAME = "testList";
+    protected static final String CARDS_ENDPOINT = "https://api.trello.com/1/cards";
+    protected static final String CARD_NAME = "testCard";
 
-    public static final int STATUS_OK = 200;
+    protected static final int STATUS_OK = 200;
+    protected static final int STATUS_NOT_FOUND = 404;
 
     protected RequestSpecification requestSpecPost;
     protected RequestSpecification requestSpecGet;
     protected RequestSpecification requestSpecPut;
     protected RequestSpecification requestSpecListPost;
     protected RequestSpecification requestSpecListPut;
+    protected RequestSpecification requestSpecCardPost;
 
     @BeforeClass(groups = "board")
     public void boardSetup() {
@@ -63,6 +69,30 @@ public class AbstractTest {
                 .addQueryParam("token", PropertiesExtractor.getToken())
                 .setContentType(ContentType.JSON)
                 .build();
+    }
+
+    @BeforeClass(groups = "cards")
+    public void cardSetup() {
+        RestAssured.baseURI = CARDS_ENDPOINT;
+
+        requestSpecCardPost = new RequestSpecBuilder()
+                .addQueryParam("name", CARD_NAME)
+                .addQueryParam("key", PropertiesExtractor.getKey())
+                .addQueryParam("token", PropertiesExtractor.getToken())
+                .setContentType(ContentType.JSON)
+                .build();
+    }
+
+    @AfterClass(enabled = false)
+    protected void deleteCreatedBoard(String boardId) {
+        given()
+            .spec(requestSpecGet)
+            .when()
+            .basePath("/{id}")
+            .pathParam("id", boardId)
+            .delete()
+            .then()
+            .statusCode(STATUS_OK);
     }
 
 }

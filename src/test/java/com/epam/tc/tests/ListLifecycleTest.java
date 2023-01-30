@@ -6,6 +6,7 @@ import com.epam.tc.entities.BoardEntity;
 import com.epam.tc.entities.ListEntity;
 import org.assertj.core.api.SoftAssertions;
 import org.testng.Assert;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
 public class ListLifecycleTest extends AbstractTest {
@@ -55,15 +56,11 @@ public class ListLifecycleTest extends AbstractTest {
 
         Assert.assertEquals(listEntity.getClosed(), "true");
 
-        given()
-            .spec(requestSpecGet)
-            .when()
-            .basePath("/{id}")
-            .pathParam("id", boardEntity.getId())
-            .delete()
-            .then()
-            .statusCode(STATUS_OK);
+    }
 
+    @AfterClass(groups = {"list"})
+    private void deleteCreatedBoard() {
+        deleteCreatedBoard(boardEntity.getId());
     }
 
 }
