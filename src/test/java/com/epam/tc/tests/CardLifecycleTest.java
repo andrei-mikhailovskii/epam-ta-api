@@ -1,56 +1,64 @@
 package com.epam.tc.tests;
 
 import static io.restassured.RestAssured.given;
+import static org.hamcrest.Matchers.equalTo;
 
-import com.epam.tc.entities.CardAttachmentEntity;
 import com.epam.tc.entities.CardEntity;
-import org.assertj.core.api.SoftAssertions;
+import com.epam.tc.entities.ListEntity;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-public class CardLifecycleTest extends AbstractTest {
+public class CardLifecycleTest extends BaseTest {
 
-    private static final String CARD_ATTACHMENT_PATH = "{id}/attachments";
+    private static final String CARDS_PATH = "/1/cards";
+    private static final String CARD_ATTACHMENT_PATH = "/1/cards/{id}/attachments";
+    private static final String CARD_NAME = "testCard";
     private static final String ATTACHMENT_NAME = "testAttachment";
     private String attachmentUrl = "https://venturebeat.com/wp-content/uploads/2015/12/oracle-java-e1450723340931.jpg";
     private String expectedMimeType = "image/jpeg";
-    private String expectedIsUploadValue = "true";
+    private boolean expectedIsUploadValue = true;
     private String expectedFileName = "oracle-java-e1450723340931.jpg";
     CardEntity cardEntity = new CardEntity();
-    CardAttachmentEntity attachmentEntity = new CardAttachmentEntity();
 
     @BeforeClass
     private void createBoardAndList() {
-        boardEntity = createNewBoard();
-        listEntity = createNewList(boardEntity.getId());
+        boardEntity = createNewBoard(BoardLifecycleTest.BOARD_NAME);
+        listEntity = given()
+                .spec(baseRequestSpec)
+                .when()
+                .basePath(LISTS_PATH)
+                .queryParam("name", ListLifecycleTest.LIST_NAME)
+                .queryParam("idBoard", boardEntity.getId())
+                .post()
+                .then()
+                .extract().body().as(ListEntity.class);
     }
 
-    @Test(priority = 1, groups = {"cards"})
+    @Test(priority = 1)
     public void createCard() {
 
         cardEntity = given()
-                .spec(requestSpecCardPost)
+                .spec(baseRequestSpec)
                 .when()
+                .basePath(CARDS_PATH)
                 .queryParam("idList", listEntity.getId())
-                .post(CARDS_ENDPOINT)
+                .queryParam("name", CARD_NAME)
+                .post()
                 .then()
-                .statusCode(STATUS_OK)
+                .spec(baseResponseSpec)
+                .body("idBoard", equalTo(boardEntity.getId()))
+                .body("idList", equalTo(listEntity.getId()))
+                .body("name", equalTo(CARD_NAME))
                 .extract().body().as(CardEntity.class);
-
-        SoftAssertions softly = new SoftAssertions();
-        softly.assertThat(cardEntity.getName()).as("Invalid card name").isEqualTo(CARD_NAME);
-        softly.assertThat(cardEntity.getIdBoard()).as("Invalid board id").isEqualTo(boardEntity.getId());
-        softly.assertThat(cardEntity.getIdList()).as("Invalid list id").isEqualTo(listEntity.getId());
-        softly.assertAll();
 
     }
 
-    @Test(priority = 2, groups = {"cards"})
+    @Test(priority = 2)
     public void createCardAttachment() {
 
-        attachmentEntity = given()
-                .spec(requestSpecCardPost)
+        given()
+                .spec(baseRequestSpec)
                 .when()
                 .basePath(CARD_ATTACHMENT_PATH)
                 .pathParam("id", cardEntity.getId())
@@ -58,19 +66,11 @@ public class CardLifecycleTest extends AbstractTest {
                 .queryParam("url", attachmentUrl)
                 .post()
                 .then()
-                .statusCode(200)
-                .extract().body().as(CardAttachmentEntity.class);
-
-        SoftAssertions softly = new SoftAssertions();
-        softly.assertThat(attachmentEntity.getName())
-                .as("Invalid attachment name").contains(ATTACHMENT_NAME);
-        softly.assertThat(attachmentEntity.getMimeType())
-                .as("Invalid mime type").isEqualTo(expectedMimeType);
-        softly.assertThat(attachmentEntity.getIsUpload())
-                .as("Invalid \"isUpload\" value").isEqualTo(expectedIsUploadValue);
-        softly.assertThat(attachmentEntity.getFileName())
-                .as("Invalid file name").isEqualTo(expectedFileName);
-        softly.assertAll();
+                .spec(baseResponseSpec)
+                .body("isUpload", equalTo(expectedIsUploadValue))
+                .body("mimeType", equalTo(expectedMimeType))
+                .body("name", equalTo(ATTACHMENT_NAME))
+                .body("fileName", equalTo(expectedFileName));
 
     }
 

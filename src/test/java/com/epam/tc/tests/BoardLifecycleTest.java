@@ -1,109 +1,87 @@
 package com.epam.tc.tests;
 
 import static io.restassured.RestAssured.given;
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.equalTo;
 
 import com.epam.tc.entities.BoardEntity;
-import io.restassured.response.Response;
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
-import org.assertj.core.api.SoftAssertions;
-import org.testng.Assert;
+import org.apache.http.HttpStatus;
 import org.testng.annotations.Test;
 
-public class BoardLifecycleTest extends AbstractTest {
+public class BoardLifecycleTest extends BaseTest {
 
-    private static final String BASE_PATH = "/{id}";
+    public static final String BOARD_NAME = "testTrelloBoard";
+    private static final String BOARD_NAME_UPDATED = "testTrelloBoardUpdated";
     BoardEntity boardEntity = new BoardEntity();
 
-    @Test(priority = 1, groups = "board")
-    public void createBoard() {
+    @Test
+    public void boardLifecycle() {
 
-        Response response = given()
-                .spec(requestSpecPost)
+        Instant gmtTime = Instant.now();
+        LocalDateTime localTimeSetToGmt = LocalDateTime.ofInstant(gmtTime, ZoneOffset.UTC);
+        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("d MMM yyyy");
+
+        //create board
+        boardEntity = given()
+                .spec(baseRequestSpec)
                 .when()
-                .post(BOARDS_ENDPOINT);
-
-        boardEntity = response
+                .basePath(BOARDS_PATH)
+                .queryParam("name", BOARD_NAME)
+                .post()
                 .then()
+                .spec(baseResponseSpec)
+                .body("name", equalTo(BOARD_NAME))
                 .extract().body().as(BoardEntity.class);
 
-        SoftAssertions softly = new SoftAssertions();
-        softly.assertThat(response.header("Content-Type"))
-                .as("Invalid content type").contains("charset=utf-8");
-        softly.assertThat(response.statusCode()).as("Invalid status code").isEqualTo(STATUS_OK);
-        softly.assertThat(boardEntity.getName()).as("Invalid board name").isEqualTo(BOARD_NAME);
-        softly.assertAll();
-
-    }
-
-    @Test(priority = 2, groups = "board")
-    public void getBoard() {
-
-        boardEntity = given()
-            .spec(requestSpecGet)
-            .when()
-            .basePath(BASE_PATH)
-            .pathParam("id", boardEntity.getId())
-            .get()
-            .then()
-            .statusCode(STATUS_OK)
-            .extract().body().as(BoardEntity.class);
-
-        SoftAssertions softly = new SoftAssertions();
-        softly.assertThat(boardEntity.getName()).as("Incorrect name")
-                .isEqualTo(BOARD_NAME);
-        softly.assertThat(boardEntity.getPinned()).as("Invalid boolean\"pinned\"").isEqualTo("false");
-        softly.assertAll();
-
-    }
-
-    @Test(priority = 3, groups = "board")
-    public void updateBoard() {
-
-        Response response = given()
-                .spec(requestSpecPut)
-                .basePath(BASE_PATH)
+        //get board
+        given()
+                .spec(baseRequestSpec)
+                .when()
+                .basePath(BOARD_ID)
                 .pathParam("id", boardEntity.getId())
-                .put();
+                .get()
+                .then()
+                .spec(baseResponseSpec)
+                .body("name", equalTo(BOARD_NAME))
+                .body("pinned", equalTo(false));
 
-        boardEntity = response
-            .then()
-            .statusCode(STATUS_OK)
-            .extract().body().as(BoardEntity.class);
-
-        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("d MMM yyyy");
-        LocalDateTime localDateTime = LocalDateTime.now();
-
-        SoftAssertions softly = new SoftAssertions();
-        softly.assertThat(response.header("Date"))
-                .as("Invalid date").contains(dateTimeFormatter.format(localDateTime));
-        softly.assertThat(boardEntity.getName())
-                .as("Board name is not updated!").isEqualTo(BOARD_NAME_UPDATED);
-        softly.assertAll();
-
-    }
-
-    @Test(priority = 4, groups = "board")
-    public void deleteBoard() {
-
+        //update board
         given()
-            .spec(requestSpecGet)
-            .when()
-            .basePath("/{id}")
-            .pathParam("id", boardEntity.getId())
-            .delete()
-            .then()
-            .statusCode(STATUS_OK)
-            .extract().body().as(BoardEntity.class);
+                .spec(baseRequestSpec)
+                .when()
+                .basePath(BOARD_ID)
+                .pathParam("id", boardEntity.getId())
+                .queryParam("name", BOARD_NAME_UPDATED)
+                .put()
+                .then()
+                .spec(baseResponseSpec)
+                .header("Date", containsString(dateTimeFormatter.format(localTimeSetToGmt)))
+                .body("id", equalTo(boardEntity.getId()))
+                .body("name", equalTo(BOARD_NAME_UPDATED));
 
+        //delete board
         given()
-            .spec(requestSpecGet)
-            .when()
-            .basePath(BASE_PATH)
-            .pathParam("id", boardEntity.getId())
-            .get()
-            .then()
-            .statusCode(STATUS_NOT_FOUND);
+                .spec(baseRequestSpec)
+                .when()
+                .basePath(BOARD_ID)
+                .pathParam("id", boardEntity.getId())
+                .delete()
+                .then()
+                .spec(baseResponseSpec);
+
+        //verify deletion
+        given()
+                .spec(baseRequestSpec)
+                .when()
+                .basePath(BOARD_ID)
+                .pathParam("id", boardEntity.getId())
+                .get()
+                .then()
+                .statusCode(HttpStatus.SC_NOT_FOUND);
 
     }
 

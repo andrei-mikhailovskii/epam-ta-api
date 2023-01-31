@@ -7,29 +7,24 @@ import java.util.Properties;
 
 public class PropertiesExtractor {
 
+    private static final String CONFIG_FILE_PATH = "src/test/resources/config.properties";
+    protected static String apiKey;
+    protected static String apiToken;
+
     public static Properties getProperties() {
 
-        try (InputStream input = new FileInputStream("src/test/resources/config.properties")) {
+        Properties properties = new Properties();
 
-            Properties properties = new Properties();
+        try (InputStream input = new FileInputStream(CONFIG_FILE_PATH)) {
             properties.load(input);
+            apiKey = properties.getProperty("key");
+            apiToken = properties.getProperty("token");
             return properties;
-
         } catch (IOException e) {
             e.printStackTrace();
         }
 
-        return null;
-    }
-
-    public static String getKey() {
-        String apiKey = getProperties().getProperty("key");
-        return apiKey;
-    }
-
-    public static String getToken() {
-        String apiToken = getProperties().getProperty("token");
-        return apiToken;
+        return properties;
     }
 
 }
