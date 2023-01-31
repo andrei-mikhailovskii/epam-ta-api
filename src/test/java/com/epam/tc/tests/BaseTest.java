@@ -49,19 +49,9 @@ public class BaseTest extends PropertiesExtractor {
     @AfterClass
     public void teardown() {
         RestAssured.reset();
+        apiKey = null;
+        apiToken = null;
     }
-
-    /*@BeforeClass
-    public void cardSetup() {
-        RestAssured.baseURI = CARDS_ENDPOINT;
-
-        requestSpecCardPost = new RequestSpecBuilder()
-                .addQueryParam("name", CARD_NAME)
-                .addQueryParam("key", PropertiesExtractor.getKey())
-                .addQueryParam("token", PropertiesExtractor.getToken())
-                .setContentType(ContentType.JSON)
-                .build();
-    }*/
 
     protected BoardEntity createNewBoard(String boardName) {
         return given()
