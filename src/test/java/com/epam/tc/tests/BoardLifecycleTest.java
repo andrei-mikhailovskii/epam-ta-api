@@ -1,10 +1,10 @@
 package com.epam.tc.tests;
 
-import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 
 import com.epam.tc.entities.BoardEntity;
+import com.epam.tc.serviceobjects.Board;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -14,9 +14,8 @@ import org.testng.annotations.Test;
 
 public class BoardLifecycleTest extends BaseTest {
 
-    public static final String BOARD_NAME = "testTrelloBoard";
+    private static final String BOARD_NAME = "testTrelloBoard";
     private static final String BOARD_NAME_UPDATED = "testTrelloBoardUpdated";
-    BoardEntity boardEntity = new BoardEntity();
 
     @Test
     public void boardLifecycle() {
@@ -26,60 +25,34 @@ public class BoardLifecycleTest extends BaseTest {
         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("d MMM yyyy");
 
         //create board
-        boardEntity = given()
-                .spec(baseRequestSpec)
-                .when()
-                .basePath(BOARDS_PATH)
-                .queryParam("name", BOARD_NAME)
-                .post()
+        boardEntity = Board.createNewBoard(BOARD_NAME)
                 .then()
                 .spec(baseResponseSpec)
-                .body("name", equalTo(BOARD_NAME))
+                .body(Board.boardBodyKeyName, equalTo(BOARD_NAME))
                 .extract().body().as(BoardEntity.class);
 
         //get board
-        given()
-                .spec(baseRequestSpec)
-                .when()
-                .basePath(BOARD_ID)
-                .pathParam("id", boardEntity.getId())
-                .get()
+        Board.getBoard(boardEntity.getId())
                 .then()
                 .spec(baseResponseSpec)
-                .body("name", equalTo(BOARD_NAME))
-                .body("pinned", equalTo(false));
+                .body(Board.boardBodyKeyName, equalTo(BOARD_NAME))
+                .body(Board.boardBodyKeyPinned, equalTo(false));
 
         //update board
-        given()
-                .spec(baseRequestSpec)
-                .when()
-                .basePath(BOARD_ID)
-                .pathParam("id", boardEntity.getId())
-                .queryParam("name", BOARD_NAME_UPDATED)
-                .put()
+        Board.updateBoard(boardEntity.getId(), BOARD_NAME_UPDATED)
                 .then()
                 .spec(baseResponseSpec)
-                .header("Date", containsString(dateTimeFormatter.format(localTimeSetToGmt)))
-                .body("id", equalTo(boardEntity.getId()))
-                .body("name", equalTo(BOARD_NAME_UPDATED));
+                .header(Board.boardHeaderKeyDate, containsString(dateTimeFormatter.format(localTimeSetToGmt)))
+                .body(Board.boardBodyKeyId, equalTo(boardEntity.getId()))
+                .body(Board.boardBodyKeyName, equalTo(BOARD_NAME_UPDATED));
 
         //delete board
-        given()
-                .spec(baseRequestSpec)
-                .when()
-                .basePath(BOARD_ID)
-                .pathParam("id", boardEntity.getId())
-                .delete()
+        Board.deleteBoard(boardEntity.getId())
                 .then()
                 .spec(baseResponseSpec);
 
         //verify deletion
-        given()
-                .spec(baseRequestSpec)
-                .when()
-                .basePath(BOARD_ID)
-                .pathParam("id", boardEntity.getId())
-                .get()
+        Board.getBoard(boardEntity.getId())
                 .then()
                 .statusCode(HttpStatus.SC_NOT_FOUND);
 
